@@ -1,0 +1,18 @@
+DROP TABLE params;
+DROP TABLE hashes;
+CREATE TABLE params (
+	id INTEGER PRIMARY KEY,
+	material VARCHAR(50),
+	op VARCHAR(50),
+	user VARCHAR(50),
+	comments VARCHAR(255)
+);
+
+CREATE TABLE hashes (
+	id INTEGER PRIMARY KEY,
+	param INTEGER ,
+	name VARCHAR(50),
+	user VARCHAR(50),
+	comments VARCHAR(255),
+	FOREIGN KEY(param) REFERENCES params(id) ON DELETE CASCADE
+);
