@@ -4,11 +4,24 @@ import (
 	 "database/sql"
 	"fmt"
 	"strconv"
+	"strings"
+	"regexp"
 	_ "github.com/mattn/go-sqlite3"
 
         "net/http"
         "net/http/cgi"
 )
+
+func replaceMap(s string,m *map[string]string) string {
+	r := regexp.MustCompile("\\${[^}]*}")
+	for x,i := range *m {
+		s = strings.Replace(s,"${"+x+"}",i,-1)
+	}
+	// Remove missing parameters
+	s = r.ReplaceAllString(s,"")
+	return s
+}
+
 func checkErr(err error) {
 	if err != nil {
 	    panic(err)
@@ -32,9 +45,7 @@ const HEADER = `
 
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
-
-`
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>`
 const FOOTER = `
 </pre></main></body></html>`
 
@@ -49,39 +60,38 @@ const TABLE_HEADER = `
 	      <th scope="col">User</th>
 	    </tr>
 	  </thead>
-	  <tbody>
-`
+	  <tbody> `
 const TABLE_FOOTER = `
 	  </tbody>
 	</table>
 	<a type="button" href="?new" class="btn btn-primary">New</a>
-</div>
-`
+</div> `
 
 const FORM = `
 <form method="POST">
-<button class="btn btn-primary" type="submit">Update</button>
-<button class="btn btn-primary" type="submit">Save as New Copy</button>
+<input type="hidden" name="record" value="${recordno}" />
+<button class="btn btn-primary" name="submit" value="update" type="submit">Update</button>
+<button class="btn btn-primary" name="submit" value="savenew" type="submit">Save as New Copy</button>
    <div class="border rounded  container"> <!-- Master Container -->
 	<div class="row g-2" class="form-control-sm" >
           <div class="col-md-4">
             <label for="validationServer01" class="form-label-sm form-label">Material</label>
-            <input name="material" type="text" class="form-control-sm form-control" id="validationServer01" required="">
+            <input name="material" value="${material}" type="text" class="form-control-sm form-control" id="validationServer01" required="">
             <small class="form-control-sm" > e.g. "Aluminum"</small>
           </div>
           <div class="col-md-4">
             <label for="validationServer02" class="form-label-sm form-label">Operation</label>
-            <input name="operation" type="text" class="form-control-sm form-control" id="validationServer02" required="">
+            <input name="operation" value="${operation}" type="text" class="form-control-sm form-control" id="validationServer02" required="">
 	    <small>e.g. "Mark, Black"</small>
           </div>
           <div class="col-md-4">
             <label for="validationServer03" class="form-label">User</label>
-            <input name="user" type="text" class="form-control-sm form-control" id="validationServer03" required="">
+            <input name="user" value="${user}" type="text" class="form-control-sm form-control" id="validationServer03" required="">
 	    <small>Your Name</small>
           </div>
           <div class="col-md-12">
             <label for="validationServer04" class="form-label">Comments</label>
-            <input name="comments" type="text" class="form-control-sm form-control" id="validationServer04">
+            <input name="comments" value="${comments}" type="text" class="form-control-sm form-control" id="validationServer04">
           </div>
 
 	</div>
@@ -101,96 +111,98 @@ const FORM = `
 	<div class="row g-4">
           <div class="col-md-3">
             <label for="validationServer01" class="form-label">Speed</label>
-            <input name="speed1" type="text" class="form-control-sm form-control" id="validationServer01" required="">
+            <input name="speed1" value="${speed1}" type="text" class="form-control-sm form-control" id="validationServer01" required="">
             <small> mm/Sec</small>
           </div>
           <div class="col-md-3">
             <label for="validationServer02" class="form-label">Power</label>
-            <input name="power1" type="text" class="form-control-sm form-control" id="validationServer02" required="">
+            <input name="power1" value="${power1}" type="text" class="form-control-sm form-control" id="validationServer02" required="">
 	    <small>Percent</small>
           </div>
           <div class="col-md-3">
             <label for="validationServer03" class="form-label">Frequency</label>
-            <input name="frequency1" type="text" class="form-control" id="validationServer03" required="">
+            <input name="frequency1" value="${frequency1}" type="text" class="form-control" id="validationServer03" required="">
 	    <small>kHz</small>
           </div>
 
           <div class="col-md-3">
             <label for="validationServer03" class="form-label">Pulse Width</label>
-            <input name="pulsewidth1" type="text" class="form-control" id="validationServer03" required="">
+            <input name="pulsewidth1" value="${pulsewidth1}" type="text" class="form-control" id="validationServer03" >
 	    <small>ns</small>
           </div>
 
 	</div>
 	<div class="row g-4">
 		<label for="hatchType" class="form-label">Hatch Type</label>
-		<div class="btn-group col-md-8" role="group" aria-label="Hatch Type">
-			  <button name="hatchA1" type="button" class="btn btn-outline"><img src="static/hatch1.png" /></button>
-			  <button name="hatchB1" type="button" class="btn btn-outline"><img src="static/hatch2.png" /></button>
-			  <button name="hatchC1" type="button" class="btn btn-outline"><img src="static/hatch3.png" /></button>
-			  <button name="hatchD1" type="button" class="btn btn-outline"><img src="static/hatch4.png" /></button>
+		<div class="btn-group col-md-8" data-toggle="buttons">
+			  <input name="hatch1" value="${hatchA1}" type="radio" class="btn btn-outline"><img src="static/hatch1.png" /></button>
+			  <input name="hatch1" value="${hatchB1}" type="radio" class="btn btn-outline"><img src="static/hatch2.png" /></button>
+			  <input name="hatch1" value="${hatchC1}" type="radio" class="btn btn-outline"><img src="static/hatch3.png" /></button>
+			  <input name="hatch1" value="${hatchD1}" type="radio" class="btn btn-outline"><img src="static/hatch4.png" /></button>
 		</div>
 	</div>
 	<div class="row">
+          <div class="col-md-1">Angle</div>
+          <div class="col-md-1">Loop Count</div>
+          <div class="col-md-1">Line Space</div>
+          <div class="col-md-1">Edge Offset</div>
+          <div class="col-md-1">Start Offset</div>
+          <div class="col-md-1">End Offset</div>
+          <div class="col-md-1">Line Reduction</div>
+          <div class="col-md-1">Loop Distance</div>
+          <div class="col-md-2">Auto Rotate Hatch Angle</div>
+  	</div>
+	<div class="row">
           <div class="col-md-1">
-            <label for="validationServer01" class="form-label">Angle</label>
-            <input name="angle1" type="text" class="form-control-sm form-control" id="validationServer01" >
+            <input name="angle1" value="${angle1}" type="text" class="form-control-sm form-control" id="validationServer01" >
             <small>Degrees</small>
 	   </div>
 
           <div class="col-md-1">
-            <label for="validationServer02" class="form-label">Loop Count</label>
-            <input name="loopcount1" type="text" class="form-control-sm form-control" id="validationServer02" >
+            <input name="loopcount1" value="${loopcount1}" type="text" class="form-control-sm form-control" id="validationServer02" >
 	    <small>Count</small>
           </div>
 
           <div class="col-md-1">
-            <label for="validationServer03" class="form-label">Line Space</label>
-            <input name="linespace1" type="text" class="form-control" id="validationServer03" >
+            <input name="linespace1" value="${linespace1}" type="text" class="form-control" id="validationServer03" >
 	    <small>mm</small>
           </div>
 
           <div class="col-md-1">
-            <label for="validationServer03" class="form-label">Edge Offset</label>
-            <input name="edgeoffset1" type="text" class="form-control" id="validationServer03" >
+            <input name="edgeoffset1" value="${edgeoffset1}" type="text" class="form-control" id="validationServer03" >
 	    <small>mm</small>
           </div>
 
 
           <div class="col-md-1">
-            <label for="validationServer03" class="form-label">Start Offset</label>
-            <input name="startoffset1" type="text" class="form-control" id="validationServer03" >
+            <input name="startoffset1" value="${startoffset1}" type="text" class="form-control" id="validationServer03" >
 	    <small>mm</small>
           </div>
 
 
           <div class="col-md-1">
-            <label for="validationServer03" class="form-label">End Offset</label>
-            <input name="endoffset1" type="text" class="form-control" id="validationServer03" >
+            <input name="endoffset1" value="${endoffset1}" type="text" class="form-control" id="validationServer03" >
 	    <small>mm</small>
           </div>
 
 
           <div class="col-md-1">
-            <label for="validationServer03" class="form-label">Line Reduction</label>
-            <input name="linereduction1" type="text" class="form-control" id="validationServer03" >
+            <input name="linereduction1" value="${linereduction1}" type="text" class="form-control" id="validationServer03" >
 	    <small>mm</small>
           </div>
 
 
           <div class="col-md-1">
-            <label for="validationServer03" class="form-label">Loop Distance</label>
-            <input name="loopdistance1" type="text" class="form-control" id="validationServer03" >
+            <input name="loopdistance1" value="${loopdistance1}" type="text" class="form-control" id="validationServer03" >
 	    <small>mm</small>
           </div>
 
 
-		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="autorotate1" type="checkbox" id="inlineCheckbox1" value="option1">
-		  <label class="form-check-label" for="inlineCheckbox1">Auto Rotate Hatch Angle</label>
-            <label for="validationServer03" class="form-label">Degrees</label>
-            <input name="degrees1" type="text" class="form-control" id="validationServer03" >
-		</div>
+          <div class="col-md-2">
+		  <input name="degrees1" value="${degrees1}" type="text" class="form-control" id="validationServer03" >
+		  <input class="form-check-input" name="autorotate1" value="${autorotate1}" type="checkbox" id="inlineCheckbox1" value="option1">
+		  Enabled
+          </div>
 
 
 
@@ -200,15 +212,15 @@ const FORM = `
 	<div class="row">
           <div class="col-md-12">
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="markcountour1" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="markcountour1" value="${markcountour1}" type="checkbox" id="inlineCheckbox1" value="option1">
 		  <label class="form-check-label" for="inlineCheckbox1">Mark Contour</label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="contourA1" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="contourA1" value="${contourA1}" type="checkbox" id="inlineCheckbox1" value="option1">
 		  <label class="form-check-label" for="inlineCheckbox1"><img src="static/contour1.png"></label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="contourB1" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="contourB1" value="${contourB1}" type="checkbox" id="inlineCheckbox1" value="option1">
 		  <label class="form-check-label" for="inlineCheckbox1"><img src="static/contour2.png"></label>
 		</div>
 	  </div>
@@ -216,19 +228,19 @@ const FORM = `
 	<div class="row">
           <div class="col-md-12">
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="enable1" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="enable1" value="${enable1}" type="checkbox" id="inlineCheckbox1" value="option1">
 		  <label class="form-check-label" for="inlineCheckbox1">Enable</label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="allcalc1" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="allcalc1" value="${allcalc1}" type="checkbox" id="inlineCheckbox1" value="option1">
 		  <label class="form-check-label" for="inlineCheckbox1">All Calc</label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="followedgeonce1" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="followedgeonce1" value="${followedgeonce1}" type="checkbox" id="inlineCheckbox1" value="option1">
 		  <label class="form-check-label" for="inlineCheckbox1">Follow Edge Once</label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="crosshatch1" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="crosshatch1" value="${crosshatch1}" type="checkbox" id="inlineCheckbox1" value="option1">
 		  <label class="form-check-label" for="inlineCheckbox1">Cross Hatch</label>
 		</div>
 	   </div>
@@ -236,8 +248,11 @@ const FORM = `
    </div>
 </div></div> <!-- End Hatch Section -->
 
-   <p>
-  <a class="btn btn-primary" name="secondCollapse" data-toggle="collapse" href="#multiCollapseExample1" role="button" aria-expanded="false" aria-controls="multiCollapseExample1">Add Second Hatch</a>
+
+
+
+<p>
+	<a class="btn btn-primary" name="secondCollapse" value="${secondCollapse}" data-toggle="collapse" href="#multiCollapseExample1" role="button" aria-expanded="false" aria-controls="multiCollapseExample1">Add Second Hatch</a>
 </p>
 
 
@@ -252,96 +267,100 @@ const FORM = `
 	<div class="row g-4">
           <div class="col-md-3">
             <label for="validationServer01" class="form-label">Speed</label>
-            <input name="speed2" type="text" class="form-control-sm form-control" id="validationServer01" >
+            <input name="speed2" value="${speed2}" type="text" class="form-control-sm form-control" id="validationServer01" >
             <small> mm/Sec</small>
           </div>
           <div class="col-md-3">
             <label for="validationServer02" class="form-label">Power</label>
-            <input name="power2" type="text" class="form-control-sm form-control" id="validationServer02" >
+            <input name="power2" value="${power2}" type="text" class="form-control-sm form-control" id="validationServer02" >
 	    <small>Percent</small>
           </div>
           <div class="col-md-3">
             <label for="validationServer03" class="form-label">Frequency</label>
-            <input name="frequency2" type="text" class="form-control" id="validationServer03" >
+            <input name="frequency2" value="${frequency2}" type="text" class="form-control" id="validationServer03" >
 	    <small>kHz</small>
           </div>
 
           <div class="col-md-3">
             <label for="validationServer03" class="form-label">Pulse Width</label>
-            <input name="pulsewidth2" type="text" class="form-control" id="validationServer03" >
+            <input name="pulsewidth2" value="${pulsewidth2}" type="text" class="form-control" id="validationServer03" >
 	    <small>ns</small>
           </div>
 
 	</div>
 	<div class="row g-4">
 		<label for="hatchType" class="form-label">Hatch Type</label>
-		<div class="btn-group col-md-8" role="group" aria-label="Hatch Type">
-			  <button name="hatchA2" type="button" class="btn btn-outline"><img src="static/hatch1.png" /></button>
-			  <button name="hatchB2" type="button" class="btn btn-outline"><img src="static/hatch2.png" /></button>
-			  <button name="hatchC2" type="button" class="btn btn-outline"><img src="static/hatch3.png" /></button>
-			  <button name="hatchD2" type="button" class="btn btn-outline"><img src="static/hatch4.png" /></button>
+		<div class="btn-group col-md-8" data-toggle="buttons">
+			  <input name="hatch2" value="${hatchA2}" type="radio" class="btn btn-outline"><img src="static/hatch1.png" /></button>
+			  <input name="hatch2" value="${hatchB2}" type="radio" class="btn btn-outline"><img src="static/hatch2.png" /></button>
+			  <input name="hatch2" value="${hatchC2}" type="radio" class="btn btn-outline"><img src="static/hatch3.png" /></button>
+			  <input name="hatch2" value="${hatchD2}" type="radio" class="btn btn-outline"><img src="static/hatch4.png" /></button>
 		</div>
 	</div>
 	<div class="row">
+          <div class="col-md-1">Angle</div>
+          <div class="col-md-1">Loop Count</div>
+          <div class="col-md-1">Line Space</div>
+          <div class="col-md-1">Edge Offset</div>
+          <div class="col-md-1">Start Offset</div>
+          <div class="col-md-1">End Offset</div>
+          <div class="col-md-1">Line Reduction</div>
+          <div class="col-md-1">Loop Distance</div>
+          <div class="col-md-2">Auto Rotate Hatch Angle</div>
+  	</div>
+	<div class="row">
           <div class="col-md-1">
-            <label for="validationServer01" class="form-label">Angle</label>
-            <input name="angle2" type="text" class="form-control-sm form-control" id="validationServer01" >
+            <input name="angle2" value="${angle2}" type="text" class="form-control-sm form-control" id="validationServer01" >
             <small>Degrees</small>
 	   </div>
 
           <div class="col-md-1">
-            <label for="validationServer02" class="form-label">Loop Count</label>
-            <input name="loopcount2" type="text" class="form-control-sm form-control" id="validationServer02" >
+            <input name="loopcount2" value="${loopcount2}" type="text" class="form-control-sm form-control" id="validationServer02" >
 	    <small>Count</small>
           </div>
 
           <div class="col-md-1">
-            <label for="validationServer03" class="form-label">Line Space</label>
-            <input name="linespace2" type="text" class="form-control" id="validationServer03" >
+            <input name="linespace2" value="${linespace2}" type="text" class="form-control" id="validationServer03" >
 	    <small>mm</small>
           </div>
 
           <div class="col-md-1">
-            <label for="validationServer03" class="form-label">Edge Offset</label>
-            <input name="edgeoffset2" type="text" class="form-control" id="validationServer03" >
+            <input name="edgeoffset2" value="${edgeoffset2}" type="text" class="form-control" id="validationServer03" >
 	    <small>mm</small>
           </div>
 
 
           <div class="col-md-1">
-            <label for="validationServer03" class="form-label">Start Offset</label>
-            <input name="startoffset2" type="text" class="form-control" id="validationServer03" >
+            <input name="startoffset2" value="${startoffset2}" type="text" class="form-control" id="validationServer03" >
 	    <small>mm</small>
           </div>
 
 
           <div class="col-md-1">
-            <label for="validationServer03" class="form-label">End Offset</label>
-            <input name="endoffset2" type="text" class="form-control" id="validationServer03" >
+            <input name="endoffset2" value="${endoffset2}" type="text" class="form-control" id="validationServer03" >
 	    <small>mm</small>
           </div>
 
 
           <div class="col-md-1">
-            <label for="validationServer03" class="form-label">Line Reduction</label>
-            <input name="linereduction2" type="text" class="form-control" id="validationServer03" >
+            <input name="linereduction2" value="${linereduction2}" type="text" class="form-control" id="validationServer03" >
 	    <small>mm</small>
           </div>
 
 
           <div class="col-md-1">
-            <label for="validationServer03" class="form-label">Loop Distance</label>
-            <input name="loopdistance2" type="text" class="form-control" id="validationServer03" >
+            <input name="loopdistance2" value="${loopdistance2}" type="text" class="form-control" id="validationServer03" >
 	    <small>mm</small>
           </div>
 
 
+          <div class="col-md-2">
+            <input name="degrees2" value="${degrees2}" type="text" class="form-control" id="validationServer03" >
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="autorotate2" type="checkbox" id="inlineCheckbox1" value="option1">
-		  <label class="form-check-label" for="inlineCheckbox1">Auto Rotate Hatch Angle</label>
-            <label for="validationServer03" class="form-label">Degrees</label>
-            <input name="degrees2" type="text" class="form-control" id="validationServer03" >
+		  <input class="form-check-input" name="autorotate2" value="${autorotate2}" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <label class="form-check-label" for="inlineCheckbox1">Enable</label>
 		</div>
+	</div>
 
 
 
@@ -351,15 +370,15 @@ const FORM = `
 	<div class="row">
           <div class="col-md-12">
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="markcountour2" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="markcountour2" value="${markcountour2}" type="checkbox" id="inlineCheckbox1" value="option1">
 		  <label class="form-check-label" for="inlineCheckbox1">Mark Contour</label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="contourA2" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="contourA2" value="${contourA2}" type="checkbox" id="inlineCheckbox1" value="option1">
 		  <label class="form-check-label" for="inlineCheckbox1"><img src="static/contour1.png"></label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="contourB2" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="contourB2" value="${contourB2}" type="checkbox" id="inlineCheckbox1" value="option1">
 		  <label class="form-check-label" for="inlineCheckbox1"><img src="static/contour2.png"></label>
 		</div>
 	  </div>
@@ -367,19 +386,19 @@ const FORM = `
 	<div class="row">
           <div class="col-md-12">
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="enable2" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="enable2" value="${enable2}" type="checkbox" id="inlineCheckbox1" value="option1">
 		  <label class="form-check-label" for="inlineCheckbox1">Enable</label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="allcalc2" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="allcalc2" value="${allcalc2}" type="checkbox" id="inlineCheckbox1" value="option1">
 		  <label class="form-check-label" for="inlineCheckbox1">All Calc</label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="followedgeonce2" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="followedgeonce2" value="${followedgeonce2}" type="checkbox" id="inlineCheckbox1" value="option1">
 		  <label class="form-check-label" for="inlineCheckbox1">Follow Edge Once</label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="crosshatch2" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="crosshatch2" value="${crosshatch2}" type="checkbox" id="inlineCheckbox1" value="option1">
 		  <label class="form-check-label" for="inlineCheckbox1">Cross Hatch</label>
 		</div>
 	   </div>
@@ -406,96 +425,101 @@ const FORM = `
 	<div class="row g-4">
           <div class="col-md-3">
             <label for="validationServer01" class="form-label">Speed</label>
-            <input name="speed3" type="text" class="form-control-sm form-control" id="validationServer01" >
+            <input name="speed3" value="${speed3}" type="text" class="form-control-sm form-control" id="validationServer01" >
             <small> mm/Sec</small>
           </div>
           <div class="col-md-3">
             <label for="validationServer02" class="form-label">Power</label>
-            <input name="power3" type="text" class="form-control-sm form-control" id="validationServer02" >
+            <input name="power3" value="${power3}" type="text" class="form-control-sm form-control" id="validationServer02" >
 	    <small>Percent</small>
           </div>
           <div class="col-md-3">
             <label for="validationServer03" class="form-label">Frequency</label>
-            <input name="frequency3" type="text" class="form-control" id="validationServer03" >
+            <input name="frequency3" value="${frequency3}" type="text" class="form-control" id="validationServer03" >
 	    <small>kHz</small>
           </div>
 
           <div class="col-md-3">
             <label for="validationServer03" class="form-label">Pulse Width</label>
-            <input name="pulsewidth3" type="text" class="form-control" id="validationServer03" >
+            <input name="pulsewidth3" value="${pulsewidth3}" type="text" class="form-control" id="validationServer03" >
 	    <small>ns</small>
           </div>
 
 	</div>
 	<div class="row g-4">
 		<label for="hatchType" class="form-label">Hatch Type</label>
-		<div class="btn-group col-md-8" role="group" aria-label="Hatch Type">
-			  <button name="hatchA3" type="button" class="btn btn-outline"><img src="static/hatch1.png" /></button>
-			  <button name="hatchB3" type="button" class="btn btn-outline"><img src="static/hatch2.png" /></button>
-			  <button name="hatchC3" type="button" class="btn btn-outline"><img src="static/hatch3.png" /></button>
-			  <button name="hatchD3" type="button" class="btn btn-outline"><img src="static/hatch4.png" /></button>
+		<div class="btn-group col-md-8" data-toggle="buttons">
+			  <input name="hatch3" value="${hatch3}" value="${hatchA3}" type="radio" class="btn btn-outline"><img src="static/hatch1.png" /></button>
+			  <input name="hatch3" value="${hatch3}" value="${hatchB3}" type="radio" class="btn btn-outline"><img src="static/hatch2.png" /></button>
+			  <input name="hatch3" value="${hatch3}" value="${hatchC3}" type="radio" class="btn btn-outline"><img src="static/hatch3.png" /></button>
+			  <input name="hatch3" value="${hatch3}" value="${hatchD3}" type="radio" class="btn btn-outline"><img src="static/hatch4.png" /></button>
 		</div>
 	</div>
+
+	<div class="row">
+          <div class="col-md-1">Angle</div>
+          <div class="col-md-1">Loop Count</div>
+          <div class="col-md-1">Line Space</div>
+          <div class="col-md-1">Edge Offset</div>
+          <div class="col-md-1">Start Offset</div>
+          <div class="col-md-1">End Offset</div>
+          <div class="col-md-1">Line Reduction</div>
+          <div class="col-md-1">Loop Distance</div>
+          <div class="col-md-2">Auto Rotate Hatch Angle</div>
+  	</div>
 	<div class="row">
           <div class="col-md-1">
-            <label for="validationServer01" class="form-label">Angle</label>
-            <input name="angle3" type="text" class="form-control-sm form-control" id="validationServer01" >
+            <input name="angle3" value="${angle3}" type="text" class="form-control-sm form-control" id="validationServer01" >
             <small>Degrees</small>
 	   </div>
 
           <div class="col-md-1">
-            <label for="validationServer02" class="form-label">Loop Count</label>
-            <input name="loopcount3" type="text" class="form-control-sm form-control" id="validationServer02" >
+            <input name="loopcount3" value="${loopcount3}" type="text" class="form-control-sm form-control" id="validationServer02" >
 	    <small>Count</small>
           </div>
 
           <div class="col-md-1">
-            <label for="validationServer03" class="form-label">Line Space</label>
-            <input name="linespace3" type="text" class="form-control" id="validationServer03" >
+            <input name="linespace3" value="${linespace3}" type="text" class="form-control" id="validationServer03" >
 	    <small>mm</small>
           </div>
 
           <div class="col-md-1">
-            <label for="validationServer03" class="form-label">Edge Offset</label>
-            <input name="edgeoffset3" type="text" class="form-control" id="validationServer03" >
+            <input name="edgeoffset3" value="${edgeoffset3}" type="text" class="form-control" id="validationServer03" >
 	    <small>mm</small>
           </div>
 
 
           <div class="col-md-1">
-            <label for="validationServer03" class="form-label">Start Offset</label>
-            <input name="startoffset3" type="text" class="form-control" id="validationServer03" >
+            <input name="startoffset3" value="${startoffset3}" type="text" class="form-control" id="validationServer03" >
 	    <small>mm</small>
           </div>
 
 
           <div class="col-md-1">
-            <label for="validationServer03" class="form-label">End Offset</label>
-            <input name="endoffset3" type="text" class="form-control" id="validationServer03" >
+            <input name="endoffset3" value="${endoffset3}" type="text" class="form-control" id="validationServer03" >
 	    <small>mm</small>
           </div>
 
 
           <div class="col-md-1">
-            <label for="validationServer03" class="form-label">Line Reduction</label>
-            <input name="linereduction3" type="text" class="form-control" id="validationServer03" >
+            <input name="linereduction3" value="${linereduction3}" type="text" class="form-control" id="validationServer03" >
 	    <small>mm</small>
           </div>
 
 
           <div class="col-md-1">
-            <label for="validationServer03" class="form-label">Loop Distance</label>
-            <input name="loopdistance3" type="text" class="form-control" id="validationServer03" >
+            <input name="loopdistance3" value="${loopdistance3}" type="text" class="form-control" id="validationServer03" >
 	    <small>mm</small>
           </div>
 
 
+          <div class="col-md-2">
+            <input name="degrees3" value="${degrees3}" type="text" class="form-control" id="validationServer03" >
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="autorotate3" type="checkbox" id="inlineCheckbox1" value="option1">
-		  <label class="form-check-label" for="inlineCheckbox1">Auto Rotate Hatch Angle</label>
-            <label for="validationServer03" class="form-label">Degrees</label>
-            <input name="degrees3" type="text" class="form-control" id="validationServer03" >
+		  <input class="form-check-input" name="autorotate3" value="${autorotate3}" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <label class="form-check-label" for="inlineCheckbox1">Enable</label>
 		</div>
+          </div>
 
 
 
@@ -505,15 +529,15 @@ const FORM = `
 	<div class="row">
           <div class="col-md-12">
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="markcountour3" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="markcountour3" value="${markcountour3}" type="checkbox" id="inlineCheckbox1" value="option1">
 		  <label class="form-check-label" for="inlineCheckbox1">Mark Contour</label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="contourA3" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="contourA3" value="${contourA3}" type="checkbox" id="inlineCheckbox1" value="option1">
 		  <label class="form-check-label" for="inlineCheckbox1"><img src="static/contour1.png"></label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="contourB3" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="contourB3" value="${contourB3}" type="checkbox" id="inlineCheckbox1" value="option1">
 		  <label class="form-check-label" for="inlineCheckbox1"><img src="static/contour2.png"></label>
 		</div>
 	  </div>
@@ -521,19 +545,19 @@ const FORM = `
 	<div class="row">
           <div class="col-md-12">
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="enable3" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="enable3" value="${enable3}" type="checkbox" id="inlineCheckbox1" value="option1">
 		  <label class="form-check-label" for="inlineCheckbox1">Enable</label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="allcalc3" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="allcalc3" value="${allcalc3}" type="checkbox" id="inlineCheckbox1" value="option1">
 		  <label class="form-check-label" for="inlineCheckbox1">All Calc</label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="followedgeonce3" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="followedgeonce3" value="${followedgeonce3}" type="checkbox" id="inlineCheckbox1" value="option1">
 		  <label class="form-check-label" for="inlineCheckbox1">Follow Edge Once</label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="crosshatch3" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="crosshatch3" value="${crosshatch3}" type="checkbox" id="inlineCheckbox1" value="option1">
 		  <label class="form-check-label" for="inlineCheckbox1">Cross Hatch</label>
 		</div>
 	   </div>
@@ -546,8 +570,7 @@ const FORM = `
 
 
 </div> <!-- Master Container -->
-</form>
-`
+</form> `
 
 func showForm(w http.ResponseWriter, r *http.Request, db *sql.DB,item int) {
 	fmt.Fprintln(w,FORM)

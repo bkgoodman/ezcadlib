@@ -6,13 +6,33 @@ CREATE TABLE params (
 	op VARCHAR(50),
 	user VARCHAR(50),
 	comments VARCHAR(255)
+
 );
 
 CREATE TABLE hashes (
 	id INTEGER PRIMARY KEY,
 	param INTEGER ,
-	name VARCHAR(50),
-	user VARCHAR(50),
-	comments VARCHAR(255),
+	edgeoffset INTEGER,
+	loopcount INTEGER,
+	startoffset INTEGER,
+	angle INTEGER,
+	loopdistance INTEGER,
+	frequency INTEGER,
+	linespace INTEGER,
+	speed INTEGER,
+	endoffset INTEGER,
+	linereduction INTEGER,
+	power INTEGER,
+	pulsewidth INTEGER,
+	degrees INTEGER,
+
+	markcontour BOOLEAN,
+	hatch INTEGER,
+	countora BOOLEAN,
+	countorb BOOLEAN,
+	crosshach BOOLEAN,
+	enable BOOLEAN,
+	allcalc BOOLEAN,
+	followedgeonce BOOLEAN,
 	FOREIGN KEY(param) REFERENCES params(id) ON DELETE CASCADE
 );
