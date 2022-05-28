@@ -1,5 +1,5 @@
 DROP TABLE params;
-DROP TABLE hashes;
+DROP TABLE hatches;
 CREATE TABLE params (
 	id INTEGER PRIMARY KEY,
 	material VARCHAR(50),
@@ -9,8 +9,9 @@ CREATE TABLE params (
 
 );
 
-CREATE TABLE hashes (
+CREATE TABLE hatches (
 	id INTEGER PRIMARY KEY,
+	sequence INTEGER,
 	param INTEGER ,
 	edgeoffset INTEGER,
 	loopcount INTEGER,
