@@ -34,14 +34,17 @@ func structToMap(x any,m map[string]string,suffix string) {
 	t:= u.Type() // t := reflect.TypeOf(u)
 	v := u //v := reflect.ValueOf(&u).Elem()
 
-	fmt.Printf("\nV is %T %+v\n", v, v)
+	//fmt.Printf("\nV is %T %+v\n", v, v)
+
 
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
 		value := v.Field(i)
 
 		//fmt.Printf("\nField Name %s %s TAG:%s %T %q\n", field.Name, field.Type, field.Tag.Get("mytag"), value, value)
-		if (value.Kind() == reflect.Int)  {
+		if (value.Kind() == reflect.Int64)  {
+			m[field.Name+suffix] = fmt.Sprintf("%d",value.Int())
+		} else if (value.Kind() == reflect.Int)  {
 			m[field.Name+suffix] = fmt.Sprintf("%d",value.Int())
 
 		} else if (value.Kind() == reflect.Bool)  {
@@ -122,6 +125,8 @@ func showForm(w http.ResponseWriter, r *http.Request, db *sqlx.DB,item int) {
 	}
 
 	structToMap(p,m,"")
+	m["collapse2"]="collapse"
+	m["collapse3"]="collapse"
 	rows,err2 :=db.Query(fmt.Sprintf(`SELECT 
 		id,sequence, param, edgeoffset, loopcount, startoffset, angle, loopdistance, frequency,
 		linespace, speed, endoffset, linereduction, power,
@@ -164,6 +169,7 @@ func showForm(w http.ResponseWriter, r *http.Request, db *sqlx.DB,item int) {
 				&h.followedgeonce,
 				&h.autorotate)
 			fmt.Fprintf(w,"Hatch %+v\n",h)
+			m[fmt.Sprintf("collapse%d",h.sequence)]="uncollapse"
 			structToMap(h,m,strconv.Itoa(h.sequence))
 			// Intepret hatch selector/radio
 			hname := fmt.Sprintf("hatch%c%d",'@'+h.hatch,h.sequence)
@@ -188,13 +194,7 @@ func showForm(w http.ResponseWriter, r *http.Request, db *sqlx.DB,item int) {
 
 }
 
-func updateRecord(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
-	fmt.Fprintln(w, "<h2>Update</h2>")
-	m := make(map[string]string)
-	form := getFile("form.html")
-	fmt.Fprintln(w,replaceMap(form,&m))
-}
-
+// Display a "new" form form
 func postNew(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 	m := make(map[string]string)
 	m["Id"]="New"
@@ -204,7 +204,7 @@ func postNew(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 
 }
 
-
+// replace an existing param
 func saveParam(oid int64,form url.Values, db *sqlx.DB) {
 	// insert
         stmt, err := db.Prepare("INSERT INTO params(material, op, user,comments) values(?,?,?,?)")
@@ -295,8 +295,39 @@ func saveHatch(oid int64,hatchno int,form url.Values, db *sqlx.DB) {
 	fmt.Printf("INSERTING %+v\n",h)
 }
 
+// Update an EXISTING record
+func updateRecord(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
+	form := r.Form
+	id,err := strconv.ParseInt(form.Get("Id"),10,64)
+	fmt.Fprintln(w, "<h2>Update",id,"</h2>")
+	m := make(map[string]string)
+	_ = err
+	_ = m
+        stmt, err := db.Prepare("UPDATE params SET material =?, op= ?, user=?,comments=? WHERE id = ?")
+        checkErr(err)
+
+        res, err := stmt.Exec(
+		form.Get("Material"),
+		form.Get("Op"),
+		form.Get("User"),
+		form.Get("Comments"),id)
+	_ = res
+	_,err = db.Exec("DELETE FROM hatches where id = ?",id)
+	/* Save Hatches */
+	saveHatch(id,1,form,db)
+	if (form.Get("hatchForm2")=="true") {
+		fmt.Fprintln(w,"<!-- Add Second Hatch -->")
+		saveHatch(id,2,form,db)
+	}
+	if ((form.Get("hatchForm2")=="true") && (form.Get("hatchForm3") == "true")) {
+		fmt.Fprintln(w,"<!-- Add Third Hatch -->")
+		saveHatch(id,3,form,db)
+	}
+}
+
+// Save a NEW parameter
 func saveNew(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
-	fmt.Fprintln(w,"<p>Saveing New</p>")
+	fmt.Fprintln(w,"<p>Saving New</p>")
 
 	// insert
         stmt, err := db.Prepare("INSERT INTO params(material, op, user,comments) values(?,?,?,?)")
@@ -314,18 +345,18 @@ func saveNew(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 	} else {
 
 		id, _ = res.LastInsertId()
-		fmt.Fprintln(w,"<p>Inserted id",id,"</p>")
+		fmt.Fprintln(w,"<!-- Inserted id",id,"-->")
 		checkErr(err)
 	}
 
 	/* Save Hatches */
 	saveHatch(id,1,form,db)
 	if (form.Get("hatchForm2")=="true") {
-		fmt.Fprintln(w,"<p>Add Second Hatch</p>")
+		fmt.Fprintln(w,"<!-- Add Second Hatch -->")
 		saveHatch(id,2,form,db)
 	}
 	if ((form.Get("hatchForm2")=="true") && (form.Get("hatchForm3") == "true")) {
-		fmt.Fprintln(w,"<p>Add Third Hatch</p>")
+		fmt.Fprintln(w,"<!-- Add Third Hatch -->")
 		saveHatch(id,3,form,db)
 	}
 }
