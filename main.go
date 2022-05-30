@@ -78,12 +78,12 @@ func checkErr(err error) {
 }
 
 const FOOTER = `
-</pre></main></body></html>`
+</main></body></html>`
 
 const TABLE_HEADER = `
 <form method="POST">
 <div class="container">
-	<table class="table table-striped">
+	<table class="table table-condensed table-striped">
 	  <thead>
 	    <tr>
 	      <th scope="col"></th>
@@ -110,7 +110,7 @@ func getFile(fn string) string {
 	return string(b)
 }
 
-func showForm(w http.ResponseWriter, r *http.Request, db *sqlx.DB,item int) {
+func showForm(w http.ResponseWriter, r *http.Request, db *sqlx.DB,item int64) {
 	fmt.Fprintln(w,"<!--")
 	stmt, err := db.Preparex("SELECT * FROM params WHERE id = ?")
 	if err != nil {
@@ -292,7 +292,19 @@ func saveHatch(oid int64,hatchno int,form url.Values, db *sqlx.DB) {
       	if (err!= nil) {
 		fmt.Println("Hatch Insert error ",err)
 	}
-	fmt.Printf("INSERTING %+v\n",h)
+	//fmt.Printf("INSERTING %+v\n",h)
+}
+
+// Delete record 
+func deleteRecord(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
+	form := r.Form
+	id,err := strconv.ParseInt(form.Get("Id"),10,64)
+	if (err == nil) {
+		fmt.Fprintln(w, "<h2>Delete",id,"</h2>")
+	}
+	_,err = db.Exec("DELETE FROM hatches where id = ?",id)
+	_,err = db.Exec("DELETE FROM params where id = ?",id)
+	showTable(w,r,db)
 }
 
 // Update an EXISTING record
@@ -323,6 +335,7 @@ func updateRecord(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 		fmt.Fprintln(w,"<!-- Add Third Hatch -->")
 		saveHatch(id,3,form,db)
 	}
+	showForm(w,r,db,id)
 }
 
 // Save a NEW parameter
@@ -407,15 +420,17 @@ func main (){
 			case form.Get("newSubmit") == "new":
 				fmt.Fprintln(w, "<h2>Create New Entry</h2>")
 				postNew(w,r,db)
+			case form.Get("submit") == "delete":
+				deleteRecord(w,r,db)
 			case form.Get("viewRecord") != "":
-				item,_ := strconv.Atoi(form.Get("viewRecord"))
+				item,_ := strconv.ParseInt(form.Get("viewRecord"),10,64)
 				showForm(w,r,db,item)
 			default:
 				showTable(w,r,db)
 		}
 
 
-		fmt.Fprintln(w,"<pre>")
+		fmt.Fprintln(w,"<!-- ")
 		fmt.Fprintln(w, "Method:", r.Method)
 		fmt.Fprintln(w, "URL:", r.URL.String())
 		query := r.URL.Query()
@@ -439,6 +454,7 @@ func main (){
 		for _, cookie := range r.Cookies() {
 			fmt.Fprintln(w, "Cookie", cookie.Name+":", cookie.Value, cookie.Path, cookie.Domain, cookie.RawExpires)
 		}
+		fmt.Fprintln(w,"-->")
 
 
 	}) ); err != nil {
