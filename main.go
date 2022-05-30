@@ -1,21 +1,20 @@
 package main
 
 import (
-	//"database/sql"
+	"database/sql"
 	"fmt"
 	"strconv"
 	"strings"
 	"log"
 	"os"
 	"regexp"
-	_ "github.com/mattn/go-sqlite3"
-	"github.com/jmoiron/sqlx"
 
 	"net/url"
 	"html"
 	"reflect"
         "net/http"
         "net/http/cgi"
+	_ "modernc.org/sqlite"
 )
 
 var checkboxes = []string{
@@ -110,16 +109,16 @@ func getFile(fn string) string {
 	return string(b)
 }
 
-func showForm(w http.ResponseWriter, r *http.Request, db *sqlx.DB,item int64) {
+func showForm(w http.ResponseWriter, r *http.Request, db *sql.DB,item int64) {
 	fmt.Fprintln(w,"<!--")
-	stmt, err := db.Preparex("SELECT * FROM params WHERE id = ?")
+	stmt, err := db.Prepare("SELECT id,material,op,user,comments FROM params WHERE id = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer stmt.Close()
 	m := make(map[string]string)
 	var p params
-	err = stmt.QueryRowx(item).StructScan(&p)
+	err = stmt.QueryRow(item).Scan(&p.Id,&p.Material,&p.Op,&p.User,&p.Comments)
 	if err != nil {
 		fmt.Fprintln(w,err)
 	}
@@ -195,17 +194,19 @@ func showForm(w http.ResponseWriter, r *http.Request, db *sqlx.DB,item int64) {
 }
 
 // Display a "new" form form
-func postNew(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
+func postNew(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	m := make(map[string]string)
 	m["Id"]="New"
 	m["updateButtonModifier"]="style='display:none'"
 	form := getFile("form.html")
+	m["collapse2"]="collapse"
+	m["collapse3"]="collapse"
 	fmt.Fprintln(w,replaceMap(form,&m))
 
 }
 
 // replace an existing param
-func saveParam(oid int64,form url.Values, db *sqlx.DB) {
+func saveParam(oid int64,form url.Values, db *sql.DB) {
 	// insert
         stmt, err := db.Prepare("INSERT INTO params(material, op, user,comments) values(?,?,?,?)")
         checkErr(err)
@@ -226,7 +227,7 @@ func saveParam(oid int64,form url.Values, db *sqlx.DB) {
 	}
 }
 
-func saveHatch(oid int64,hatchno int,form url.Values, db *sqlx.DB) {
+func saveHatch(oid int64,hatchno int,form url.Values, db *sql.DB) {
 	var h hatches
 
 
@@ -296,7 +297,7 @@ func saveHatch(oid int64,hatchno int,form url.Values, db *sqlx.DB) {
 }
 
 // Delete record 
-func deleteRecord(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
+func deleteRecord(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	form := r.Form
 	id,err := strconv.ParseInt(form.Get("Id"),10,64)
 	if (err == nil) {
@@ -308,7 +309,7 @@ func deleteRecord(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 }
 
 // Update an EXISTING record
-func updateRecord(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
+func updateRecord(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	form := r.Form
 	id,err := strconv.ParseInt(form.Get("Id"),10,64)
 	fmt.Fprintln(w, "<h2>Update",id,"</h2>")
@@ -339,7 +340,7 @@ func updateRecord(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 }
 
 // Save a NEW parameter
-func saveNew(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
+func saveNew(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	fmt.Fprintln(w,"<p>Saving New</p>")
 
 	// insert
@@ -374,14 +375,14 @@ func saveNew(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 	}
 }
 
-func showTable(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
+func showTable(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	fmt.Fprintln(w,TABLE_HEADER)
-	row, err := db.Queryx("SELECT * FROM params;")
+	row, err := db.Query("SELECT id,material,op,user,comments FROM params;")
 	checkErr(err)
 	defer row.Close()
 	for row.Next() {
 		var p params
-		row.StructScan(&p)
+		row.Scan(&p.Id,&p.Material,&p.Op,&p.User,&p.Comments)
 		fmt.Fprintf(w,`
 	    <tr>
 	      <td>
@@ -402,7 +403,7 @@ func main (){
 
 		defer func(){fmt.Fprintln(w, FOOTER)}()
 
-		db, err := sqlx.Open("sqlite3", "./params.db")
+		db, err := sql.Open("sqlite", "./params.db")
 		fmt.Fprintln(w,err)
 		defer func() { db.Close() }()
 		checkErr(err)
