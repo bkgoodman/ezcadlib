@@ -10,7 +10,7 @@ CREATE TABLE params (
 );
 
 CREATE TABLE hatches (
-	id INTEGER PRIMARY KEY,
+	id INTEGER,
 	sequence INTEGER,
 	param INTEGER ,
 	edgeoffset INTEGER,
@@ -29,11 +29,12 @@ CREATE TABLE hatches (
 
 	markcontour BOOLEAN,
 	hatch INTEGER,
-	countora BOOLEAN,
-	countorb BOOLEAN,
-	crosshach BOOLEAN,
+	contoura BOOLEAN,
+	contourb BOOLEAN,
+	crosshatch BOOLEAN,
 	enable BOOLEAN,
 	allcalc BOOLEAN,
 	followedgeonce BOOLEAN,
+	autorotate BOOLEAN,
 	FOREIGN KEY(param) REFERENCES params(id) ON DELETE CASCADE
 );

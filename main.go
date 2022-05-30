@@ -18,6 +18,16 @@ import (
         "net/http/cgi"
 )
 
+var checkboxes = []string{
+	"markcontour",
+	"contoura",
+	"contourb",
+	"crosshatch",
+	"enable",
+	"allcalc",
+	"followedgeonce",
+	"autorotate"}
+
 // Take fields in a struct and stick them in a map
 func structToMap(x any,m map[string]string,suffix string) {
 	u:= reflect.ValueOf(x)
@@ -32,7 +42,14 @@ func structToMap(x any,m map[string]string,suffix string) {
 
 		//fmt.Printf("\nField Name %s %s TAG:%s %T %q\n", field.Name, field.Type, field.Tag.Get("mytag"), value, value)
 		if (value.Kind() == reflect.Int)  {
-			m[field.Name] = fmt.Sprintf("%d",value.Int())
+			m[field.Name+suffix] = fmt.Sprintf("%d",value.Int())
+
+		} else if (value.Kind() == reflect.Bool)  {
+			if (value.Bool()) {
+				m[field.Name+suffix] = "true"
+			} else {
+				m[field.Name+suffix] = "false"
+			}
 
 		} else {
 			m[field.Name+suffix] = value.String()
@@ -91,6 +108,7 @@ func getFile(fn string) string {
 }
 
 func showForm(w http.ResponseWriter, r *http.Request, db *sqlx.DB,item int) {
+	fmt.Fprintln(w,"<!--")
 	stmt, err := db.Preparex("SELECT * FROM params WHERE id = ?")
 	if err != nil {
 		log.Fatal(err)
@@ -104,17 +122,66 @@ func showForm(w http.ResponseWriter, r *http.Request, db *sqlx.DB,item int) {
 	}
 
 	structToMap(p,m,"")
-	/*
-	rows,err2 :=stmt.Query(fmt.Sprintf("SELECT * from hashes where id = %d",item))
+	rows,err2 :=db.Query(fmt.Sprintf(`SELECT 
+		id,sequence, param, edgeoffset, loopcount, startoffset, angle, loopdistance, frequency,
+		linespace, speed, endoffset, linereduction, power,
+		pulsewidth, degrees, hatch, markcontour, contoura,
+		contourb, crosshatch, enable, allcalc, followedgeonce, autorotate
+	FROM hatches WHERE id = %d ORDER BY sequence;`,item))
 	if err2 != nil {
 		fmt.Fprintln(w,err2)
 	} else {
+		fmt.Fprintf(w,"%d HATCH ROWS %+v\n",item,rows)
 		for rows.Next() {
 			//rows.Scan
-			fmt.Fprintf(w,"%+v\n",rows)
+			fmt.Fprintf(w,"HATCH ROW %+v\n",rows)
+			var h hatches
+			_ = rows.Scan(
+				&h.id,
+				&h.sequence,
+				&h.param,
+				&h.edgeoffset,
+				&h.loopcount,
+				&h.startoffset,
+				&h.angle,
+				&h.loopdistance,
+				&h.frequency,
+				&h.linespace,
+				&h.speed,
+				&h.endoffset,
+				&h.linereduction,
+				&h.power,
+				&h.pulsewidth,
+				&h.degrees,
+				&h.hatch,
+
+				&h.markcontour,
+				&h.contoura,
+				&h.contourb,
+				&h.crosshatch,
+				&h.enable,
+				&h.allcalc,
+				&h.followedgeonce,
+				&h.autorotate)
+			fmt.Fprintf(w,"Hatch %+v\n",h)
+			structToMap(h,m,strconv.Itoa(h.sequence))
+			// Intepret hatch selector/radio
+			hname := fmt.Sprintf("hatch%c%d",'@'+h.hatch,h.sequence)
+			m[hname]="checked"
+			fmt.Println("HATCH SET",hname,"TO",m[hname])
+			for _,x := range checkboxes  {
+				hname = fmt.Sprintf("%s%d",x,h.sequence)
+				if (m[hname] == "true") {
+					m[hname]="checked"
+				} else {
+					m[hname]=""
+				}
+				fmt.Println("SET",hname,"TO",m[hname])
+			}
 		}
 	}
-	*/
+	fmt.Fprintf(w,"Map is  %+v\n",m)
+	fmt.Fprintln(w,"-->")
 	form := getFile("form.html")
 	fmt.Fprintln(w,replaceMap(form,&m))
 	fmt.Fprintf(w,"%+v",m)
@@ -130,6 +197,8 @@ func updateRecord(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 
 func postNew(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 	m := make(map[string]string)
+	m["Id"]="New"
+	m["updateButtonModifier"]="style='display:none'"
 	form := getFile("form.html")
 	fmt.Fprintln(w,replaceMap(form,&m))
 
@@ -180,30 +249,20 @@ func saveHatch(oid int64,hatchno int,form url.Values, db *sqlx.DB) {
 	h.hatch,_ = strconv.Atoi(form.Get("hatch"+strconv.Itoa(hatchno)))
 
 	h.markcontour = form.Get("markcontour"+strconv.Itoa(hatchno))=="true"
-	h.countora = form.Get("countora"+strconv.Itoa(hatchno))=="true"
-	h.countorb = form.Get("countorb"+strconv.Itoa(hatchno))=="true"
-	h.crosshach = form.Get("crosshach"+strconv.Itoa(hatchno))=="true"
+	h.contoura = form.Get("contoura"+strconv.Itoa(hatchno))=="true"
+	h.contourb = form.Get("contourb"+strconv.Itoa(hatchno))=="true"
+	h.crosshatch = form.Get("crosshatch"+strconv.Itoa(hatchno))=="true"
 	h.enable = form.Get("enable"+strconv.Itoa(hatchno))=="true"
 	h.allcalc = form.Get("allcalc"+strconv.Itoa(hatchno))=="true"
 	h.followedgeonce = form.Get("followedgeonce"+strconv.Itoa(hatchno))=="true"
+	h.autorotate = form.Get("autorotate"+strconv.Itoa(hatchno))=="true"
 
-	q := `INSERT INTO hatches ( id,sequence, param, edgeoffset, loopcount, startoffset, angle, loopdistance, frequency,
-	linespace,
-	speed,
-	endoffset,
-	linereduction,
-	power,
-	pulsewidth,
-	degrees,
-	hatch,
-	markcontour,
-	countora,
-	countorb,
-	crosshach,
-	enable,
-	allcalc,
-	followedgeonce
-	) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+	q := `INSERT INTO hatches ( 
+	id,sequence, param, edgeoffset, loopcount, startoffset, angle, loopdistance, frequency,
+	linespace, speed, endoffset, linereduction, power,
+	pulsewidth, degrees, hatch, markcontour, contoura,
+	contourb, crosshatch, enable, allcalc, followedgeonce, autorotate)
+	VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
 	_,err := db.Exec(q,
 		h.id,h.sequence,
 		h.param,
@@ -223,12 +282,13 @@ func saveHatch(oid int64,hatchno int,form url.Values, db *sqlx.DB) {
 		h.hatch,
 
 		h.markcontour,
-		h.countora,
-		h.countorb,
-		h.crosshach,
+		h.contoura,
+		h.contourb,
+		h.crosshatch,
 		h.enable,
 		h.allcalc,
-		h.followedgeonce)
+		h.followedgeonce,
+		h.autorotate)
       	if (err!= nil) {
 		fmt.Println("Hatch Insert error ",err)
 	}
@@ -246,7 +306,7 @@ func saveNew(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 	var id int64
         res, err := stmt.Exec(
 		form.Get("Material"),
-		form.Get("Operation"),
+		form.Get("Op"),
 		form.Get("User"),
 		form.Get("Comments"))
       	if (err!= nil) {

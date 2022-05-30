@@ -27,10 +27,11 @@ type  hatches struct {
 	hatch int `db:"hatch"`
 
 	markcontour bool `db:"markcontour"`
-	countora bool `db:"countora"`
-	countorb bool `db:"countorb"`
-	crosshach bool `db:"crosshach"`
+	contoura bool `db:"contoura"`
+	contourb bool `db:"contourb"`
+	crosshatch bool `db:"crosshatch"`
 	enable bool `db:"enable"`
 	allcalc bool `db:"allcalc"`
 	followedgeonce bool `db:"followedgeonce"`
+	autorotate bool `db:"autorotate"`
 }

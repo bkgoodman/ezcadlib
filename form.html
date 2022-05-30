@@ -1,8 +1,19 @@
+<!--- START OF FORM TEMPLATE -->
 <form method="POST">
 <input type="hidden" name="Id" value="${Id}" />
-<button class="btn btn-primary" name="submit" value="update" type="submit">Update</button>
-<button class="btn btn-primary" name="submit" value="savenew" type="submit">Save as New Copy</button>
+
+	<div class="container" class="form-control-sm" >
+	<div class="row my-2 g-2" class="form-control-sm" >
+          <div class="col-md-4">
+		<button class="btn btn-primary" name="submit" ${updateButtonModifier} value="update" type="submit">Update</button>
+		<button class="btn btn-primary" name="submit" value="savenew" type="submit">Save as New Copy</button>
+	  </div>
+	  </div>
+	</div>
    <div class="border rounded  container"> <!-- Master Container -->
+
+
+
 	<div class="row g-2" class="form-control-sm" >
           <div class="col-md-4">
             <label for="validationServer01" class="form-label-sm form-label">Material</label>
@@ -65,10 +76,10 @@
 	<div class="row g-4">
 		<label for="hatchType" class="form-label">Hatch Type</label>
 		<div class="btn-group col-md-8" data-toggle="buttons">
-			  <input name="hatch1" value="${hatchA1}" type="radio" class="btn btn-outline"><img src="static/hatch1.png" /></button>
-			  <input name="hatch1" value="${hatchB1}" type="radio" class="btn btn-outline"><img src="static/hatch2.png" /></button>
-			  <input name="hatch1" value="${hatchC1}" type="radio" class="btn btn-outline"><img src="static/hatch3.png" /></button>
-			  <input name="hatch1" value="${hatchD1}" type="radio" class="btn btn-outline"><img src="static/hatch4.png" /></button>
+			  <input name="hatch1" value="1" ${hatchA1} type="radio" class="btn btn-outline"><img src="static/hatch1.png" /></button>
+			  <input name="hatch1" value="2" ${hatchB1} type="radio" class="btn btn-outline"><img src="static/hatch2.png" /></button>
+			  <input name="hatch1" value="3" ${hatchC1} type="radio" class="btn btn-outline"><img src="static/hatch3.png" /></button>
+			  <input name="hatch1" value="4" ${hatchD1} type="radio" class="btn btn-outline"><img src="static/hatch4.png" /></button>
 		</div>
 	</div>
 	<div class="row">
@@ -130,8 +141,8 @@
 
           <div class="col-md-2">
 		  <input name="degrees1" value="${degrees1}" type="text" class="form-control" id="validationServer03" >
-		  <input class="form-check-input" name="autorotate1" value="${autorotate1}" type="checkbox" id="inlineCheckbox1" value="option1">
-		  Enabled
+		  <input class="form-check-input" name="autorotate1" ${autorotate1} type="checkbox" id="inlineCheckbox1" value="true">
+		  Autorotate
           </div>
 
 
@@ -141,15 +152,15 @@
 	<div class="row">
           <div class="col-md-12">
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="markcountour1" value="${markcountour1}" type="checkbox" id="inlineCheckbox1" value="option1">
+			<input class="form-check-input" name="markcontour1" ${markcontour1} type="checkbox" id="inlineCheckbox1" value="true">
 		  <label class="form-check-label" for="inlineCheckbox1">Mark Contour</label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="contourA1" value="${contourA1}" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="contoura1" ${contoura1} type="checkbox" id="inlineCheckbox1" value="true">
 		  <label class="form-check-label" for="inlineCheckbox1"><img src="static/contour1.png"></label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="contourB1" value="${contourB1}" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="contourb1" ${contourb1} type="checkbox" id="inlineCheckbox1" value="true">
 		  <label class="form-check-label" for="inlineCheckbox1"><img src="static/contour2.png"></label>
 		</div>
 	  </div>
@@ -157,19 +168,19 @@
 	<div class="row">
           <div class="col-md-12">
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="enable1" value="${enable1}" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="enable1" ${enable1} type="checkbox" id="inlineCheckbox1" value="true">
 		  <label class="form-check-label" for="inlineCheckbox1">Enable</label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="allcalc1" value="${allcalc1}" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="allcalc1" ${allcalc1} type="checkbox" id="inlineCheckbox1" value="true">
 		  <label class="form-check-label" for="inlineCheckbox1">All Calc</label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="followedgeonce1" value="${followedgeonce1}" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="followedgeonce1" ${followedgeonce1} type="checkbox" id="inlineCheckbox1" value="true">
 		  <label class="form-check-label" for="inlineCheckbox1">Follow Edge Once</label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="crosshatch1" value="${crosshatch1}" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="crosshatch1" ${crosshatch1} type="checkbox" id="inlineCheckbox1" value="true">
 		  <label class="form-check-label" for="inlineCheckbox1">Cross Hatch</label>
 		</div>
 	   </div>
@@ -221,10 +232,10 @@
 	<div class="row g-4">
 		<label for="hatchType" class="form-label">Hatch Type</label>
 		<div class="btn-group col-md-8" data-toggle="buttons">
-			  <input name="hatch2" value="${hatchA2}" type="radio" class="btn btn-outline"><img src="static/hatch1.png" /></button>
-			  <input name="hatch2" value="${hatchB2}" type="radio" class="btn btn-outline"><img src="static/hatch2.png" /></button>
-			  <input name="hatch2" value="${hatchC2}" type="radio" class="btn btn-outline"><img src="static/hatch3.png" /></button>
-			  <input name="hatch2" value="${hatchD2}" type="radio" class="btn btn-outline"><img src="static/hatch4.png" /></button>
+			  <input name="hatch2" value="1" ${hatchA2} type="radio" class="btn btn-outline"><img src="static/hatch1.png" /></button>
+			  <input name="hatch2" value="2" ${hatchB2} type="radio" class="btn btn-outline"><img src="static/hatch2.png" /></button>
+			  <input name="hatch2" value="3" ${hatchC2} type="radio" class="btn btn-outline"><img src="static/hatch3.png" /></button>
+			  <input name="hatch2" value="4" ${hatchD2} type="radio" class="btn btn-outline"><img src="static/hatch4.png" /></button>
 		</div>
 	</div>
 	<div class="row">
@@ -287,8 +298,8 @@
           <div class="col-md-2">
             <input name="degrees2" value="${degrees2}" type="text" class="form-control" id="validationServer03" >
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="autorotate2" value="${autorotate2}" type="checkbox" id="inlineCheckbox1" value="option1">
-		  <label class="form-check-label" for="inlineCheckbox1">Enable</label>
+		  <input class="form-check-input" name="autorotate2" ${autorotate2} type="checkbox" id="inlineCheckbox1" value="true">
+		  <label class="form-check-label" for="inlineCheckbox1">Autorotate</label>
 		</div>
 	</div>
 
@@ -300,15 +311,15 @@
 	<div class="row">
           <div class="col-md-12">
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="markcountour2" value="${markcountour2}" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="markcontour2" ${markcontour2} type="checkbox" id="inlineCheckbox1" value="true">
 		  <label class="form-check-label" for="inlineCheckbox1">Mark Contour</label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="contourA2" value="${contourA2}" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="contoura2" ${contoura2} type="checkbox" id="inlineCheckbox1" value="true">
 		  <label class="form-check-label" for="inlineCheckbox1"><img src="static/contour1.png"></label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="contourB2" value="${contourB2}" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="contourb2" ${contourb2} type="checkbox" id="inlineCheckbox1" value="true">
 		  <label class="form-check-label" for="inlineCheckbox1"><img src="static/contour2.png"></label>
 		</div>
 	  </div>
@@ -316,19 +327,19 @@
 	<div class="row">
           <div class="col-md-12">
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="enable2" value="${enable2}" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="enable2" ${enable2} type="checkbox" id="inlineCheckbox1" value="true">
 		  <label class="form-check-label" for="inlineCheckbox1">Enable</label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="allcalc2" value="${allcalc2}" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="allcalc2" ${allcalc2} type="checkbox" id="inlineCheckbox1" value="true">
 		  <label class="form-check-label" for="inlineCheckbox1">All Calc</label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="followedgeonce2" value="${followedgeonce2}" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="followedgeonce2" ${followedgeonce2} type="checkbox" id="inlineCheckbox1" value="true">
 		  <label class="form-check-label" for="inlineCheckbox1">Follow Edge Once</label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="crosshatch2" value="${crosshatch2}" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="crosshatch2" ${crosshatch2} type="checkbox" id="inlineCheckbox1" value="true">
 		  <label class="form-check-label" for="inlineCheckbox1">Cross Hatch</label>
 		</div>
 	   </div>
@@ -380,10 +391,10 @@
 	<div class="row g-4">
 		<label for="hatchType" class="form-label">Hatch Type</label>
 		<div class="btn-group col-md-8" data-toggle="buttons">
-			  <input name="hatch3" value="${hatch3}" value="${hatchA3}" type="radio" class="btn btn-outline"><img src="static/hatch1.png" /></button>
-			  <input name="hatch3" value="${hatch3}" value="${hatchB3}" type="radio" class="btn btn-outline"><img src="static/hatch2.png" /></button>
-			  <input name="hatch3" value="${hatch3}" value="${hatchC3}" type="radio" class="btn btn-outline"><img src="static/hatch3.png" /></button>
-			  <input name="hatch3" value="${hatch3}" value="${hatchD3}" type="radio" class="btn btn-outline"><img src="static/hatch4.png" /></button>
+			  <input name="hatch3" value="1" ${hatchA3} type="radio" class="btn btn-outline"><img src="static/hatch1.png" /></button>
+			  <input name="hatch3" value="2" ${hatchB3} type="radio" class="btn btn-outline"><img src="static/hatch2.png" /></button>
+			  <input name="hatch3" value="3" ${hatchC3} type="radio" class="btn btn-outline"><img src="static/hatch3.png" /></button>
+			  <input name="hatch3" value="4" ${hatchD3} type="radio" class="btn btn-outline"><img src="static/hatch4.png" /></button>
 		</div>
 	</div>
 
@@ -447,8 +458,8 @@
           <div class="col-md-2">
             <input name="degrees3" value="${degrees3}" type="text" class="form-control" id="validationServer03" >
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="autorotate3" value="${autorotate3}" type="checkbox" id="inlineCheckbox1" value="option1">
-		  <label class="form-check-label" for="inlineCheckbox1">Enable</label>
+		  <input class="form-check-input" name="autorotate3" ${autorotate3} type="checkbox" id="inlineCheckbox1" value="true">
+		  <label class="form-check-label" for="inlineCheckbox1">Autorotate</label>
 		</div>
           </div>
 	 </div>
@@ -457,15 +468,15 @@
 	<div class="row">
           <div class="col-md-12">
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="markcountour3" value="${markcountour3}" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="markcontour3" ${markcontour3} type="checkbox" id="inlineCheckbox1" value="true">
 		  <label class="form-check-label" for="inlineCheckbox1">Mark Contour</label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="contourA3" value="${contourA3}" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="contoura3" ${contoura3} type="checkbox" id="inlineCheckbox1" value="true">
 		  <label class="form-check-label" for="inlineCheckbox1"><img src="static/contour1.png"></label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="contourB3" value="${contourB3}" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="contourb3" ${contourb3} type="checkbox" id="inlineCheckbox1" value="true">
 		  <label class="form-check-label" for="inlineCheckbox1"><img src="static/contour2.png"></label>
 		</div>
 	  </div>
@@ -473,19 +484,19 @@
 	<div class="row">
           <div class="col-md-12">
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="enable3" value="${enable3}" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="enable3" ${enable3} type="checkbox" id="inlineCheckbox1" value="true">
 		  <label class="form-check-label" for="inlineCheckbox1">Enable</label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="allcalc3" value="${allcalc3}" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="allcalc3" ${allcalc3} type="checkbox" id="inlineCheckbox1" value="true">
 		  <label class="form-check-label" for="inlineCheckbox1">All Calc</label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="followedgeonce3" value="${followedgeonce3}" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="followedgeonce3" ${followedgeonce3} type="checkbox" id="inlineCheckbox1" value="true">
 		  <label class="form-check-label" for="inlineCheckbox1">Follow Edge Once</label>
 		</div>
 		<div class="form-check form-check-inline">
-		  <input class="form-check-input" name="crosshatch3" value="${crosshatch3}" type="checkbox" id="inlineCheckbox1" value="option1">
+		  <input class="form-check-input" name="crosshatch3" ${crosshatch3} type="checkbox" id="inlineCheckbox1" value="true">
 		  <label class="form-check-label" for="inlineCheckbox1">Cross Hatch</label>
 		</div>
 	   </div>
@@ -499,3 +510,4 @@
 
 </div> <!-- Master Container -->
 </form>
+<!--- EMD  FORM TEMPLATE -->
