@@ -5,6 +5,7 @@ type params struct {
 	Op string `db:"op"`
 	User string `db:"user"`
 	Comments string `db:"comments"`
+	Grp string `db:"grp"`
 }
 
 type  hatches struct {

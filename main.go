@@ -127,8 +127,8 @@ func showForm(w http.ResponseWriter, r *http.Request, db *sql.DB,item int64) {
 	m["collapse2"]="collapse"
 	m["collapse3"]="collapse"
 	rows,err2 :=db.Query(fmt.Sprintf(`SELECT 
-		id,sequence, param, edgeoffset, loopcount, startoffset, angle, loopdistance, frequency,
-		linespace, speed, endoffset, linereduction, power,
+		id,sequence, param, loopcount, angle, loopdistance, frequency,
+		linespace, speed, linereduction, power,
 		pulsewidth, degrees, hatch, markcontour, contoura,
 		contourb, crosshatch, enable, allcalc, followedgeonce, autorotate
 	FROM hatches WHERE id = %d ORDER BY sequence;`,item))
@@ -144,15 +144,12 @@ func showForm(w http.ResponseWriter, r *http.Request, db *sql.DB,item int64) {
 				&h.id,
 				&h.sequence,
 				&h.param,
-				&h.edgeoffset,
 				&h.loopcount,
-				&h.startoffset,
 				&h.angle,
 				&h.loopdistance,
 				&h.frequency,
 				&h.linespace,
 				&h.speed,
-				&h.endoffset,
 				&h.linereduction,
 				&h.power,
 				&h.pulsewidth,
@@ -234,9 +231,6 @@ func saveHatch(oid int64,hatchno int,form url.Values, db *sql.DB) {
 	h.id=oid
 	h.sequence=hatchno
 	h.param,_ = strconv.Atoi(form.Get("param"+strconv.Itoa(hatchno)))
-	h.edgeoffset,_ = strconv.Atoi(form.Get("edgeoffset"+strconv.Itoa(hatchno)))
-	h.loopcount,_ = strconv.Atoi(form.Get("loopcount"+strconv.Itoa(hatchno)))
-	h.startoffset,_ = strconv.Atoi(form.Get("startoffset"+strconv.Itoa(hatchno)))
 	h.angle,_ = strconv.Atoi(form.Get("angle"+strconv.Itoa(hatchno)))
 	h.loopdistance,_ = strconv.Atoi(form.Get("loopdistance"+strconv.Itoa(hatchno)))
 	h.frequency,_ = strconv.Atoi(form.Get("frequency"+strconv.Itoa(hatchno)))
@@ -259,23 +253,20 @@ func saveHatch(oid int64,hatchno int,form url.Values, db *sql.DB) {
 	h.autorotate = form.Get("autorotate"+strconv.Itoa(hatchno))=="true"
 
 	q := `INSERT INTO hatches ( 
-	id,sequence, param, edgeoffset, loopcount, startoffset, angle, loopdistance, frequency,
-	linespace, speed, endoffset, linereduction, power,
+	id,sequence, param, loopcount, angle, loopdistance, frequency,
+	linespace, speed, linereduction, power,
 	pulsewidth, degrees, hatch, markcontour, contoura,
 	contourb, crosshatch, enable, allcalc, followedgeonce, autorotate)
-	VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+	VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
 	_,err := db.Exec(q,
 		h.id,h.sequence,
 		h.param,
-		h.edgeoffset,
 		h.loopcount,
-		h.startoffset,
 		h.angle,
 		h.loopdistance,
 		h.frequency,
 		h.linespace,
 		h.speed,
-		h.endoffset,
 		h.linereduction,
 		h.power,
 		h.pulsewidth,
